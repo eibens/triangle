@@ -1,25 +1,28 @@
 const color = [233, 30, 99, 255].map(x => x / 255)
 
 const vertexShader = `
-attribute vec3 coordinates;
+attribute vec3 position;
+attribute vec3 target;
+
+uniform float time;
 
 void main (void) {
-  gl_Position = vec4 (coordinates, 1.0);
+  gl_Position = vec4(mix(position, target, time), 1.0);
 }
 `
 
 const fragmentShader = `
 void main (void) {
-  gl_FragColor = vec4 (${color.join(',')});
+  gl_FragColor = vec4(${color.join(',')});
 }
 `
-const vertices = [
-  0.0, 1, 0.0,
-  -0.5, -1, 0.0,
-  0.5, -1, 0.0
-]
 
 const indices = [0, 1, 2]
+const vertices = [
+  0.0, -1, 0.0,    /**/ 0.0, 1.0, 0.0,
+  -0.5, -1, 0.0,  /**/ -0.5, -1, 0.0,
+  0.5, -1, 0.0,   /**/ 0.5, -1, 0.0
+]
 
 const init = gl => {
   const vertexBuffer = gl.createBuffer()
@@ -42,15 +45,22 @@ const init = gl => {
   gl.linkProgram(program)
   gl.useProgram(program)
 
-  const a_position = gl.getAttribLocation(program, 'coordinates')
-  gl.vertexAttribPointer(a_position, 3, gl.FLOAT, false, 0, 0)
-  gl.enableVertexAttribArray(a_position);
+  const position = gl.getAttribLocation(program, 'position')
+  gl.vertexAttribPointer(position, 3, gl.FLOAT, false, 24, 0)
+  gl.enableVertexAttribArray(position);
+
+  const target = gl.getAttribLocation(program, 'target')
+  gl.vertexAttribPointer(target, 3, gl.FLOAT, false, 24, 12)
+  gl.enableVertexAttribArray(target)
+
+  const time = gl.getUniformLocation(program, 'time')
 
   gl.enable(gl.DEPTH_TEST)
+
+  return { time }
 }
 
-
-const draw = (gl, now) => {
+const draw = (gl, effect, now) => {
   const oldWidth = gl.canvas.width
   const newWidth = gl.canvas.clientWidth
   if (oldWidth !== newWidth) gl.canvas.width = newWidth
@@ -58,12 +68,15 @@ const draw = (gl, now) => {
   const oldHeight = gl.canvas.height
   const newHeight = gl.canvas.clientHeight
   if (oldHeight !== newHeight) gl.canvas.height = newHeight
+  const invert = Math.floor(now) % 2
+  const time = invert ? (1 - now % 1) : now % 1
+  console.log(time)
+  gl.uniform1f(effect.time, time)
 
   gl.viewport(0, 0, newWidth, newHeight)
   gl.clear(gl.COLOR_BUFFER_BIT)
   gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
 }
-
 
 const main = () => {
   const gl = document.getElementById('canvas').getContext('webgl')
@@ -71,9 +84,8 @@ const main = () => {
     console.log('no webgl :(')
     return
   }
-  init(gl)
   const loop = now => {
-    draw(gl, now / 1000)
+    draw(gl, init(gl), now / 1000)
     requestAnimationFrame(loop)
   }
   loop()
