@@ -60,7 +60,22 @@ const init = gl => {
   return { time }
 }
 
-const draw = (gl, effect, now) => {
+const state = {}
+const process = () => {
+  const action = location.hash.match(/^#?(.*)$/)[1]
+  if (action === '_') {
+    state.reverse = true
+    if (state.time == null) state.time = 0
+  }
+  if (action === '%CE%9B') {
+    state.reverse = false
+    if (state.time == null) state.time = 1
+  }
+}
+window.addEventListener('hashchange', process)
+process()
+
+const draw = (gl, effect, delta) => {
   const oldWidth = gl.canvas.width
   const newWidth = gl.canvas.clientWidth
   if (oldWidth !== newWidth) gl.canvas.width = newWidth
@@ -68,10 +83,11 @@ const draw = (gl, effect, now) => {
   const oldHeight = gl.canvas.height
   const newHeight = gl.canvas.clientHeight
   if (oldHeight !== newHeight) gl.canvas.height = newHeight
-  const invert = Math.floor(now) % 2
-  const time = invert ? (1 - now % 1) : now % 1
-  console.log(time)
-  gl.uniform1f(effect.time, time)
+
+  state.time = state.reverse
+    ? Math.max(0, state.time - delta)
+    : Math.min(1, state.time + delta)
+  gl.uniform1f(effect.time, state.time)
 
   gl.viewport(0, 0, newWidth, newHeight)
   gl.clear(gl.COLOR_BUFFER_BIT)
@@ -84,10 +100,13 @@ const main = () => {
     console.log('no webgl :(')
     return
   }
+  let then = 0
   const loop = now => {
-    draw(gl, init(gl), now / 1000)
+    now /= 1000
+    draw(gl, init(gl), now - then)
     requestAnimationFrame(loop)
+    then = now
   }
-  loop()
+  loop(0)
 }
 main()

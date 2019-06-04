@@ -2,6 +2,9 @@
     --font: "Roboto Mono", monospace;
     --color: rgb(233, 30, 99);
     --background: #222;
+    --foreground: white;
+    --layer: rgba(255, 255, 255, 0.1);
+    --highlight: rgba(255, 255, 255, 0.2);
     --selection: rgba(233, 30, 99, 0.2);
 }
 
@@ -15,13 +18,39 @@ html {
     font-family: var(--font);
 }
 
-canvas {
-    display: flex;
-    align-items: center;
-    justify-content: center;
+canvas, main {
     position: absolute;
     top: 0;
     left: 0;
     width: 100vw;
     height: 100vh;
+}
+
+main {
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    box-sizing: border-box;
+    padding: 8px;
+}
+
+a {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    background: var(--layer);
+    border-radius: 100%;
+    border: none;
+    outline: none;
+    transition: background 0.2s;
+    text-decoration: none;
+    color: var(--foreground);
+    margin: 8px;
+}
+
+a:hover {
+    background: var(--highlight);
 }
