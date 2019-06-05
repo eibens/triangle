@@ -5,26 +5,34 @@ const color = [233, 30, 99, 255].map(x => x / 255)
 const vertexShader = `
 attribute vec3 position;
 attribute vec3 target;
+attribute vec4 color;
 
 uniform float time;
 uniform mat4 matrix;
 
+varying vec4 v_color;
+
 void main (void) {
+  v_color = color;
   gl_Position = matrix * vec4(mix(position, target, time), 1.0);
 }
 `
 
 const fragmentShader = `
+precision mediump float;
+
+varying vec4 v_color;
+
 void main (void) {
-  gl_FragColor = vec4(${color.join(',')});
+  gl_FragColor = v_color;
 }
 `
 
 const indices = [0, 1, 2]
 const vertices = [
-  0.0, -1, -3, /**/ 0.0, 1.0, -3,
-  -1, -1, -3,  /**/ -1, -1, -3,
-  1, -1, -3,   /**/ 1, -1, -3
+  0.0, -1, 0, /**/ 0.0, 1.0, 0, /**/ ...color,
+  -1, -1, 0,  /**/ -1, -1, 0,   /**/ 0, 0, 0, 0,
+  1, -1, 0,   /**/ 1, -1, 0,    /**/ 0, 0, 0, 0
 ]
 
 const init = gl => {
@@ -49,12 +57,16 @@ const init = gl => {
   gl.useProgram(program)
 
   const position = gl.getAttribLocation(program, 'position')
-  gl.vertexAttribPointer(position, 3, gl.FLOAT, false, 24, 0)
+  gl.vertexAttribPointer(position, 3, gl.FLOAT, false, 40, 0)
   gl.enableVertexAttribArray(position);
 
   const target = gl.getAttribLocation(program, 'target')
-  gl.vertexAttribPointer(target, 3, gl.FLOAT, false, 24, 12)
+  gl.vertexAttribPointer(target, 3, gl.FLOAT, false, 40, 12)
   gl.enableVertexAttribArray(target)
+
+  const color = gl.getAttribLocation(program, 'color')
+  gl.vertexAttribPointer(color, 4, gl.FLOAT, false, 40, 24)
+  gl.enableVertexAttribArray(color);
 
   gl.enable(gl.DEPTH_TEST)
 
