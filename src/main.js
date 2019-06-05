@@ -101,10 +101,11 @@ const main = () => {
     console.log('no webgl :(')
     return
   }
+  const effect = init(gl)
   let then = 0
   const loop = now => {
     now /= 1000
-    draw(gl, init(gl), now - then)
+    draw(gl, effect, now - then)
     requestAnimationFrame(loop)
     then = now
   }
