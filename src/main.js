@@ -28,21 +28,42 @@ void main (void) {
 }
 `
 
-const indices = [0, 1, 2]
-const vertices = [
-  0.0, -1, 0, /**/ 0.0, 1.0, 0, /**/ ...color,
-  -1, -1, 0,  /**/ -1, -1, 0,   /**/ 0, 0, 0, 0,
-  1, -1, 0,   /**/ 1, -1, 0,    /**/ 0, 0, 0, 0
-]
+const createGeometry = () => {
+  const flatten = array => array
+    .reduce((a, x) => [...a, ...(Array.isArray(x) ? flatten(x) : [x])], [])
+  const range = (n, k = 0) => new Array(n).fill(k)
+    .map((x, i) => (x + i) % n)
+
+  const colors = [
+    [1, 0, 0, 1],
+    [0, 1, 0, 1],
+    [0, 0, 1, 1],
+    [1, 1, 0, 1]
+  ]
+  const positions = [
+    [-1, -1, -1],
+    [-1, 1, 1],
+    [1, 1, -1],
+    [1, -1, 1]
+  ]
+  const n = 4
+  const p = 3
+  const vertices = range(n)
+    .map(i => range(n, i).slice(0, p))
+    .map((indices, f) => indices
+      .map(i => [positions[i], positions[i], colors[f]]))
+  return {
+    vertexData: new Float32Array(flatten(vertices)),
+    count: 12
+  }
+}
+
+const mesh = createGeometry()
 
 const init = gl => {
   const vertexBuffer = gl.createBuffer()
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW)
-
-  const indexBuffer = gl.createBuffer()
-  gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBuffer)
-  gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(indices), gl.STATIC_DRAW)
+  gl.bufferData(gl.ARRAY_BUFFER, mesh.vertexData, gl.STATIC_DRAW)
 
   const compile = (gl, type, source) => {
     const shader = gl.createShader(type)
@@ -94,9 +115,24 @@ process()
 
 const createMatrix = state => {
   const tau = 2 * Math.PI
-  const fov = tau / 6
+
+  const phi = state.time * tau
+  const world = mat4.rotateY(mat4.create(), mat4.create(), phi)
+
+  const eye = vec3.fromValues(0, 0, -5)
+  const target = vec3.fromValues(0, 0, 0)
+  const up = vec3.fromValues(0, 1, 0)
+  const camera = mat4.targetTo(mat4.create(), eye, target, up)
+
+  const fov = tau / 8
   const aspect = state.width / state.height
-  return mat4.perspective(mat4.create(), fov, aspect, 0.1, 10)
+  const projection = mat4.perspective(mat4.create(), fov, aspect, 0.1, 10)
+
+  const matrix = mat4.create()
+  mat4.mul(matrix, world, matrix)
+  mat4.mul(matrix, camera, matrix)
+  mat4.mul(matrix, projection, matrix)
+  return matrix
 }
 
 const draw = (gl, effect, delta) => {
@@ -119,7 +155,7 @@ const draw = (gl, effect, delta) => {
 
   gl.viewport(0, 0, newWidth, newHeight)
   gl.clear(gl.COLOR_BUFFER_BIT)
-  gl.drawElements(gl.TRIANGLES, indices.length, gl.UNSIGNED_SHORT, 0)
+  gl.drawArrays(gl.TRIANGLES, 0, mesh.count)
 }
 
 const main = () => {
