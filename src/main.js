@@ -63,13 +63,14 @@ const init = gl => {
 const state = {}
 const process = () => {
   const action = location.hash.match(/^#?(.*)$/)[1]
-  if (action === '_') {
-    state.reverse = true
-    if (state.time == null) state.time = 0
-  }
-  if (action === '%CE%9B') {
-    state.reverse = false
-    if (state.time == null) state.time = 1
+  switch (action) {
+    case '%CE%9B':
+      state.reverse = false
+      if (state.time == null) state.time = 1
+      break
+    default:
+      state.reverse = true
+      if (state.time == null) state.time = 0
   }
 }
 window.addEventListener('hashchange', process)
