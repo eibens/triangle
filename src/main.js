@@ -1,3 +1,5 @@
+import { mat4, vec3 } from 'gl-matrix'
+
 const color = [233, 30, 99, 255].map(x => x / 255)
 
 const vertexShader = `
@@ -5,9 +7,10 @@ attribute vec3 position;
 attribute vec3 target;
 
 uniform float time;
+uniform mat4 matrix;
 
 void main (void) {
-  gl_Position = vec4(mix(position, target, time), 1.0);
+  gl_Position = matrix * vec4(mix(position, target, time), 1.0);
 }
 `
 
@@ -19,9 +22,9 @@ void main (void) {
 
 const indices = [0, 1, 2]
 const vertices = [
-  0.0, -1, 0.0,    /**/ 0.0, 1.0, 0.0,
-  -0.5, -1, 0.0,  /**/ -0.5, -1, 0.0,
-  0.5, -1, 0.0,   /**/ 0.5, -1, 0.0
+  0.0, -1, -3, /**/ 0.0, 1.0, -3,
+  -1, -1, -3,  /**/ -1, -1, -3,
+  1, -1, -3,   /**/ 1, -1, -3
 ]
 
 const init = gl => {
@@ -53,11 +56,12 @@ const init = gl => {
   gl.vertexAttribPointer(target, 3, gl.FLOAT, false, 24, 12)
   gl.enableVertexAttribArray(target)
 
-  const time = gl.getUniformLocation(program, 'time')
-
   gl.enable(gl.DEPTH_TEST)
 
-  return { time }
+  return {
+    time: gl.getUniformLocation(program, 'time'),
+    matrix: gl.getUniformLocation(program, 'matrix')
+  }
 }
 
 const state = {}
@@ -76,6 +80,13 @@ const process = () => {
 window.addEventListener('hashchange', process)
 process()
 
+const createMatrix = state => {
+  const tau = 2 * Math.PI
+  const fov = tau / 6
+  const aspect = state.width / state.height
+  return mat4.perspective(mat4.create(), fov, aspect, 0.1, 10)
+}
+
 const draw = (gl, effect, delta) => {
   const oldWidth = gl.canvas.width
   const newWidth = gl.canvas.clientWidth
@@ -85,10 +96,14 @@ const draw = (gl, effect, delta) => {
   const newHeight = gl.canvas.clientHeight
   if (oldHeight !== newHeight) gl.canvas.height = newHeight
 
+  state.width = gl.canvas.width
+  state.height = gl.canvas.height
+
   state.time = state.reverse
     ? Math.max(0, state.time - delta)
     : Math.min(1, state.time + delta)
   gl.uniform1f(effect.time, state.time)
+  gl.uniformMatrix4fv(effect.matrix, false, createMatrix(state))
 
   gl.viewport(0, 0, newWidth, newHeight)
   gl.clear(gl.COLOR_BUFFER_BIT)
