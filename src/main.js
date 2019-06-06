@@ -28,37 +28,45 @@ void main (void) {
 }
 `
 
-const createGeometry = () => {
-  const flatten = array => array
-    .reduce((a, x) => [...a, ...(Array.isArray(x) ? flatten(x) : [x])], [])
-  const range = (n, k = 0) => new Array(n).fill(k)
-    .map((x, i) => (x + i) % n)
-
-  const colors = [
-    [1, 0, 0, 1],
-    [0, 1, 0, 1],
-    [0, 0, 1, 1],
-    [1, 1, 0, 1]
-  ]
-  const positions = [
-    [-1, -1, -1],
-    [-1, 1, 1],
-    [1, 1, -1],
-    [1, -1, 1]
-  ]
-  const n = 4
-  const p = 3
-  const vertices = range(n)
-    .map(i => range(n, i).slice(0, p))
-    .map((indices, f) => indices
-      .map(i => [positions[i], positions[i], colors[f]]))
+const tetra = (positions, colors) => {
+  const rotate = (array, k) => [...array.slice(k), ...array.slice(0, k)]
+  const mix = (A, B) => A.map((x, i) => (x + B[i]) / 2)
+  const vertices = []
+  for (let t = 0; t < 4; t++) {
+    const [A, B, C, D] = rotate(positions, t)
+    const small = [A, mix(A, B), mix(A, C), mix(A, D)]
+    for (let f = 0; f < 4; f++) {
+      const color = rotate(colors, f)[f]
+      for (let p = 0; p < 3; p++) {
+        const position = small[(f + p) % 4]
+        vertices.push(...position)
+        const animated = f === 1 && p === 2
+        vertices.push(...(animated ? mix(B, C) : position))
+        vertices.push(...color)
+      }
+    }
+  }
   return {
-    vertexData: new Float32Array(flatten(vertices)),
-    count: 12
+    vertexData: new Float32Array(vertices),
+    count: vertices.length / 10
   }
 }
 
-const mesh = createGeometry()
+const colors = [
+  [0.85, 0.11, 0.38],
+  [0.56, 0.14, 0.67],
+  [0.40, 0.23, 0.72],
+  [0.25, 0.32, 0.71]
+]
+
+const positions = [
+  [-1, -1, -1],
+  [-1, 1, 1],
+  [1, 1, -1],
+  [1, -1, 1]
+]
+
+const mesh = tetra(positions, colors)
 
 const init = gl => {
   const vertexBuffer = gl.createBuffer()
