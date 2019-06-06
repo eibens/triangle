@@ -28,50 +28,56 @@ void main (void) {
 }
 `
 
-const tetra = (positions, colors) => {
-  const rotate = (array, k) => [...array.slice(k), ...array.slice(0, k)]
-  const mix = (A, B) => A.map((x, i) => (x + B[i]) / 2)
-  const vertices = []
-  for (let t = 0; t < 4; t++) {
-    const [A, B, C, D] = rotate(positions, t)
-    const small = [A, mix(A, B), mix(A, C), mix(A, D)]
-    for (let f = 0; f < 4; f++) {
-      const color = rotate(colors, f)[f]
-      for (let p = 0; p < 3; p++) {
-        const position = small[(f + p) % 4]
-        vertices.push(...position)
-        const animated = f === 1 && p === 2
-        vertices.push(...(animated ? mix(B, C) : position))
-        vertices.push(...color)
-      }
-    }
-  }
-  return {
-    vertexData: new Float32Array(vertices),
-    count: vertices.length / 10
-  }
+const flatten = array => Array.isArray(array)
+  ? array.reduce((a, x) => [...a, ...flatten(x)], [])
+  : [array]
+
+const neg = ([x, y, z]) => [-x, -y, -z]
+const mul = (s, [x, y, z]) => [s * x, s * y, s * z]
+const add = ([ax, ay, az], [bx, by, bz]) => [ax + bx, ay + by, az + bz]
+const mix = (a, b) => mul(0.5, add(a, b))
+
+const vertex = (positions, colors, f, p) => {
+  const [A, B, C] = positions
+  const position = positions[(f + p) % 4]
+  const target = f === 1 && p === 2 ? add(neg(A), add(B, C)) : position
+  return [position, target, colors[f]]
 }
 
-const colors = [
-  [0.85, 0.11, 0.38],
-  [0.56, 0.14, 0.67],
-  [0.40, 0.23, 0.72],
-  [0.25, 0.32, 0.71]
-]
+const face = (positions, colors, f) => [0, 1, 2]
+  .map(p => vertex(positions, colors, f, p))
 
-const positions = [
-  [-1, -1, -1],
-  [-1, 1, 1],
-  [1, 1, -1],
-  [1, -1, 1]
-]
+const tetrahedron = (positions, colors) => [0, 1, 2, 3]
+  .map(f => face(positions, colors, f))
 
-const mesh = tetra(positions, colors)
+const subdivide = positions => [0, 1, 2, 3]
+  .map(t => [...positions.slice(t), ...positions.slice(0, t)])
+  .map(([A, B, C, D]) => [A, mix(A, B), mix(A, C), mix(A, D)])
 
+const sierpinski = (level, positions, colors) => level > 0
+  ? subdivide(positions).map(child => sierpinski(level - 1, child, colors))
+  : tetrahedron(positions, colors)
+
+const mesh = (level => ({
+  count: Math.pow(4, level) * 12,
+  vertices: flatten(sierpinski(level, [
+    [-1, -1, -1],
+    [-1, 1, 1],
+    [1, 1, -1],
+    [1, -1, 1]
+  ], [
+    [0.85, 0.11, 0.38, 1.0],
+    [0.56, 0.14, 0.67, 1.0],
+    [0.40, 0.23, 0.72, 1.0],
+    [0.25, 0.32, 0.71, 1.0]
+  ]))
+}))(3)
+
+console.log(mesh)
 const init = gl => {
   const vertexBuffer = gl.createBuffer()
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer)
-  gl.bufferData(gl.ARRAY_BUFFER, mesh.vertexData, gl.STATIC_DRAW)
+  gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(mesh.vertices), gl.STATIC_DRAW)
 
   const compile = (gl, type, source) => {
     const shader = gl.createShader(type)
@@ -124,7 +130,7 @@ process()
 const createMatrix = state => {
   const tau = 2 * Math.PI
 
-  const phi = state.time * tau
+  const phi = tau * state.time / 4 + 0.2
   const world = mat4.rotateY(mat4.create(), mat4.create(), phi)
 
   const eye = vec3.fromValues(0, 0, -5)
