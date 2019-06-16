@@ -2,6 +2,9 @@ import { mat4, vec3 } from 'gl-matrix'
 import { transition } from './lib/time'
 
 const LEVELS = 6
+const TAU = 2 * Math.PI
+
+const clamp = (min, max, x) => Math.min(max, Math.max(min, x))
 
 const vertexShader = `
 attribute vec3 position;
@@ -131,17 +134,18 @@ const init = gl => {
   }
 }
 
-const createMatrix = (width, height) => {
-  const tau = 2 * Math.PI
-  const phi = 0.2
-  const world = mat4.rotateY(mat4.create(), mat4.create(), phi)
+const createMatrix = (width, height, phi, theta) => {
+  const world = mat4.create()
+  mat4.rotateX(world, world, theta)
+  mat4.rotateY(world, world, phi)
+  console.log([phi, theta])
 
   const eye = vec3.fromValues(0, 0, -5)
   const target = vec3.fromValues(0, 0, 0)
   const up = vec3.fromValues(0, 1, 0)
   const camera = mat4.targetTo(mat4.create(), eye, target, up)
 
-  const fov = tau / 8
+  const fov = TAU / 8
   const aspect = width / height
   const projection = mat4.perspective(mat4.create(), fov, aspect, 0.1, 10)
 
@@ -152,7 +156,7 @@ const createMatrix = (width, height) => {
   return matrix
 }
 
-const draw = (gl, effect, param) => {
+const draw = (gl, effect, state) => {
   const oldWidth = gl.canvas.width
   const newWidth = gl.canvas.clientWidth
   if (oldWidth !== newWidth) gl.canvas.width = newWidth
@@ -161,14 +165,19 @@ const draw = (gl, effect, param) => {
   const newHeight = gl.canvas.clientHeight
   if (oldHeight !== newHeight) gl.canvas.height = newHeight
 
-  const time = param < LEVELS ? param % 1 : 1
+  const time = state.param < LEVELS ? state.param % 1 : 1
   gl.uniform1f(effect.time, time)
-  gl.uniformMatrix4fv(effect.matrix, false, createMatrix(gl.canvas.width, gl.canvas.height))
+  gl.uniformMatrix4fv(effect.matrix, false, createMatrix(
+    gl.canvas.width,
+    gl.canvas.height,
+    state.phi,
+    state.theta
+  ))
 
   gl.viewport(0, 0, newWidth, newHeight)
   gl.clear(gl.COLOR_BUFFER_BIT)
 
-  const level = Math.max(0, Math.min(LEVELS - 1, Math.floor(param)))
+  const level = clamp(0, LEVELS - 1, Math.floor(state.param))
   const { offset, count } = effect.meshes[level]
   gl.drawArrays(gl.TRIANGLES, offset, count)
 }
@@ -202,14 +211,25 @@ const draw = (gl, effect, param) => {
     window.location = '#' + level
   })
 
+  let phi = 0
+  let theta = 0
+  window.document.addEventListener('mousemove', event => {
+    if (event.buttons !== 1) return
+    phi += (TAU + event.movementX / 100) % TAU,
+    theta = clamp(-TAU / 4, TAU / 4, theta - event.movementY / 100)
+  })
+
   const gl = window.document.getElementById('canvas').getContext('webgl')
   if (!gl) {
-    console.log('no webgl :(')
     return
   }
   const effect = init(gl)
   const loop = () => {
-    draw(gl, effect, timeline.sample())
+    draw(gl, effect, {
+      phi,
+      theta,
+      param: timeline.sample()
+    })
     requestAnimationFrame(loop)
   }
   loop()
