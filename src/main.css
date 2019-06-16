@@ -16,6 +16,7 @@ html {
     color: var(--color);
     background: var(--background);
     font-family: var(--font);
+    user-select: none;
 }
 
 canvas, main {
@@ -53,4 +54,8 @@ a {
 
 a:hover {
     background: var(--highlight);
+}
+
+a.active {
+    background: var(--color);
 }
