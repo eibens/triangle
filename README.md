@@ -62,4 +62,4 @@ Runs the unit tests specified in the `test` directory.
 
 :pencil: Lukas Eibensteiner<br>
 :e-mail: [l.eibensteiner@gmail.com](mailto:l.eibensteiner@gmail.com)<br>
-:package: [eibens/lambda-template](https://github.com/eibens/triangle)
+:package: [eibens/triangle](https://github.com/eibens/triangle)
