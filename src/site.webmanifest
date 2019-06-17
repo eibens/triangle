@@ -1,0 +1,7 @@
+{
+    "name": "tetra",
+    "short_name": "tetra",
+    "theme_color": "#E91E63",
+    "background_color": "#222222",
+    "display": "standalone"
+}
