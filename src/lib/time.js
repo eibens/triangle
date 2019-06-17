@@ -40,11 +40,11 @@ export const schedule = (events, value, delay, time) => {
   return events
 }
 
-export const transition = (initial, speed) => {
+export const transition = initial => {
   const events = [event(now(), initial)]
   return {
     events: () => events,
     sample: () => sample(events, now()),
-    update: value => schedule(events, value, speed, now())
+    update: (value, speed) => schedule(events, value, speed, now())
   }
 }

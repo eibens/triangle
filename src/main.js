@@ -195,8 +195,12 @@ const draw = (gl, effect, state) => {
 }
 
 (window => {
+  const document = window.document
+
   const getLevelFromHash = () => parseInt(location.hash.match(/^#?(.*)$/)[1] || 0)
-  const updateTitle = level => window.document.title = 'tetrahedron level ' + level
+  const updateTitle = level => document.title = level
+    ? 'tetrahedron level ' + level
+    : 'triangle'
   const updateButtonState = () => {
     Array.from(document.querySelectorAll('a'))
       .forEach(button => button.getAttribute('href') === location.hash
@@ -205,14 +209,15 @@ const draw = (gl, effect, state) => {
   }
 
   const initialLevel = getLevelFromHash()
-  const timeline = transition(initialLevel, 1)
+  const timeline = transition(initialLevel)
   updateTitle(initialLevel)
   updateButtonState()
 
   window.addEventListener('hashchange', () => {
     const level = getLevelFromHash()
+    const speed = parseFloat(document.getElementById('speed').value)
     updateTitle(level)
-    timeline.update(level)
+    timeline.update(level, speed)
     updateButtonState()
   })
 
@@ -225,13 +230,13 @@ const draw = (gl, effect, state) => {
 
   let phi = TAU / 8
   let theta = 0
-  window.document.addEventListener('mousemove', event => {
+  document.addEventListener('mousemove', event => {
     if (event.buttons !== 1) return
     phi += (TAU + event.movementX / 100) % TAU,
     theta = clamp(-TAU / 4, TAU / 4, theta - event.movementY / 100)
   })
 
-  const gl = window.document.getElementById('canvas').getContext('webgl')
+  const gl = document.getElementById('canvas').getContext('webgl')
   if (!gl) {
     return
   }
