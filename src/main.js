@@ -35,10 +35,10 @@ void main (void) {
 
 const createMesh = levels => {
   const positions = [
-    [-1, -1, -1],
-    [-1, 1, 1],
     [1, 1, -1],
-    [1, -1, 1]
+    [1, -1, 1],
+    [-1, -1, -1],
+    [-1, 1, 1]
   ]
   const colors = [
     [0.85, 0.11, 0.38, 1.0],
@@ -53,17 +53,28 @@ const createMesh = levels => {
   const mix = (a, b) => mul(0.5, add(a, b))
   const range = n => new Array(n).fill(0).map((x, i) => i)
   const rotate = (array, k) => [...array.slice(k), ...array.slice(0, k)]
+  const mirror = (x, p1, p2) => add(neg(x), add(p1, p2))
 
-  const tetrahedron = (positions, colors) => range(4)
-    .map(face => range(3)
-      .map(vertex => {
-        const [A, B, C] = positions
-        const position = positions[(face + vertex) % 4]
-        const color = colors[face]
-        const positionTarget = face === 1 && vertex === 2 ? add(neg(A), add(B, C)) : position
-        const colorTarget = face === 1 ? colors[(face + 3) % 4] : colors[face]
-        return [positionTarget, position, colorTarget, color]
+  const tetrahedron = (positions, colors, triangle = false) => {
+    const [A, B, C, D] = positions
+    const AA = [A, A]
+    const BB = [B, B]
+    const CC = [C, C]
+    const D1 = mirror(A, B, C)
+    const D2 = triangle ? mirror(B, C, A) : D
+    const D3 = triangle ? mirror(C, A, B) : D
+    return [
+      [AA, BB, CC],
+      [BB, CC, [D1, D]],
+      [CC, [D2, D], AA],
+      [[D3, D], AA, BB]
+    ].map((face, f) => face.map(([position, positionTarget]) => {
+        const color = !triangle && f === 1
+          ? colors[(f + 3) % 4]
+          : colors[f]
+        return [position, positionTarget, color, colors[f]]
       }))
+  }
 
   const subdivision = positions => range(4)
     .map(t => rotate(positions, t))
@@ -85,7 +96,9 @@ const createMesh = levels => {
     }))
 
   const vertices = flatten(range(levels)
-    .map(level => fractal(level, positions, colors)))
+    .map(level => level === 0
+      ? tetrahedron(positions, colors, true)
+      : fractal(level, positions, colors)))
 
   return { vertices, meshes }
 }
@@ -138,7 +151,6 @@ const createMatrix = (width, height, phi, theta) => {
   const world = mat4.create()
   mat4.rotateX(world, world, theta)
   mat4.rotateY(world, world, phi)
-  console.log([phi, theta])
 
   const eye = vec3.fromValues(0, 0, -5)
   const target = vec3.fromValues(0, 0, 0)
@@ -211,7 +223,7 @@ const draw = (gl, effect, state) => {
     window.location = '#' + level
   })
 
-  let phi = 0
+  let phi = TAU / 8
   let theta = 0
   window.document.addEventListener('mousemove', event => {
     if (event.buttons !== 1) return
