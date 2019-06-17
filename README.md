@@ -10,6 +10,14 @@ The **number of iterations** (= resolution of the fractal) can be controlled via
 
 You can **rotate the tetrahedron** around the vertical and horizontal axis by moving the mouse while pressing the left mouse button anywhere on screen.
 
+## Implementation
+
+The core of the algorithm is found in the `createMesh` function in `src/main.js`. It generates the vertex data (positions and colors) for the multiple levels of the tetrahedron. The initial tetrahedron is constructed from the points of a cube ranging from -1 to 1. We start at (-1 -1 -1) and repeatedly move diagonally by flipping the signs of exactly two components. This gives us four equidistant points.
+
+We start with a given number of iterations and recursively subdivide the starting tetrahedron. The inductive step constructs four smaller tetrahedra inside a given set of four points at the halfway points of its edges. Every recursion decrements the iteration counter. When it reaches zero only a simple tetrahedron mesh is needed and given points (A B C D) we can can form triangles (A B C), (B C D), (C D A), and (D A B).
+
+Every vertex has a `position` and `color` component. For animation we additionally supply a `positionTarget` and `colorTarget`, which are used as the second value for a linear interpolation in the vertex shader.
+
 ## Technologies
 
 - [npm](https://www.npmjs.com/): Handles dependencies and scripts.
