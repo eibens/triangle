@@ -69,11 +69,11 @@ const createMesh = levels => {
       [CC, [D2, D], AA],
       [[D3, D], AA, BB]
     ].map((face, f) => face.map(([position, positionTarget]) => {
-        const color = !triangle && f === 1
-          ? colors[(f + 3) % 4]
-          : colors[f]
-        return [position, positionTarget, color, colors[f]]
-      }))
+      const color = !triangle && f === 1
+        ? colors[(f + 3) % 4]
+        : colors[f]
+      return [position, positionTarget, color, colors[f]]
+    }))
   }
 
   const subdivision = positions => range(4)
@@ -197,13 +197,15 @@ const draw = (gl, effect, state) => {
 (window => {
   const document = window.document
 
-  const getLevelFromHash = () => parseInt(location.hash.match(/^#?(.*)$/)[1] || 0)
-  const updateTitle = level => document.title = level
-    ? 'tetrahedron level ' + level
-    : 'triangle'
+  const getLevelFromHash = () => parseInt(window.location.hash.match(/^#?(.*)$/)[1] || 0)
+  const updateTitle = level => {
+    document.title = level
+      ? 'tetrahedron level ' + level
+      : 'triangle'
+  }
   const updateButtonState = () => {
     Array.from(document.querySelectorAll('a'))
-      .forEach(button => button.getAttribute('href') === location.hash
+      .forEach(button => button.getAttribute('href') === window.location.hash
         ? button.classList.add('active')
         : button.classList.remove('active'))
   }
@@ -232,7 +234,7 @@ const draw = (gl, effect, state) => {
   let theta = 0
   document.addEventListener('mousemove', event => {
     if (event.buttons !== 1) return
-    phi += (TAU + event.movementX / 100) % TAU,
+    phi += (TAU + event.movementX / 100) % TAU
     theta = clamp(-TAU / 4, TAU / 4, theta - event.movementY / 100)
   })
 
@@ -247,7 +249,7 @@ const draw = (gl, effect, state) => {
       theta,
       param: timeline.sample()
     })
-    requestAnimationFrame(loop)
+    window.requestAnimationFrame(loop)
   }
   loop()
 })(window)
