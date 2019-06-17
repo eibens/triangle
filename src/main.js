@@ -232,11 +232,36 @@ const draw = (gl, effect, state) => {
 
   let phi = TAU / 8
   let theta = 0
-  document.addEventListener('mousemove', event => {
-    if (event.buttons !== 1) return
-    phi += (TAU + event.movementX / 100) % TAU
-    theta = clamp(-TAU / 4, TAU / 4, theta - event.movementY / 100)
+  let touch = false
+  let screenX = 0
+  let screenY = 0
+  const onTouchStart = event => {
+    if (event.touches) event = event.touches[0]
+    screenX = event.screenX
+    screenY = event.screenY
+    touch = true
+  }
+  const onTouchEnd = () => { touch = false }
+  const onTouchMove = event => {
+    if (event.touches) event = event.touches[0]
+    const deltaX = event.screenX - screenX
+    const deltaY = event.screenY - screenY
+    screenX = event.screenX
+    screenY = event.screenY
+    if (!touch) return
+    phi += (TAU + deltaX / 196) % TAU
+    theta = clamp(-TAU / 4, TAU / 4, theta - deltaY / 196)
+  }
+  document.addEventListener('touchstart', onTouchStart)
+  document.addEventListener('touchmove', event => {
+    console.log('touch')
+    onTouchMove(event)
   })
+  document.addEventListener('touchend', onTouchEnd)
+  document.addEventListener('mousedown', onTouchStart)
+  document.addEventListener('mousemove', onTouchMove)
+  document.addEventListener('mouseup', onTouchEnd)
+
 
   const gl = document.getElementById('canvas').getContext('webgl')
   if (!gl) {
