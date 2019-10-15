@@ -1,6 +1,6 @@
 # triangle
 
-[DEMO](http://elfpixel.com/triangle)
+[DEMO](https://lambda.website/triangle)
 
 *Note: **triangle** might be a misnomer, but hey... **Naming things is hard** and it DOES consist of triangles.*
 
