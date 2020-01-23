@@ -1,10 +1,10 @@
 # triangle
 
+Interactive WebGL animation of a [Sierpinski tetrahedron](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle#Analogues_in_higher_dimensions).
+
 [DEMO](https://lambda.website/triangle)
 
-*Note: **triangle** might be a misnomer, but hey... **Naming things is hard** and it DOES consist of triangles.*
-
-Interactive WebGL animation of a [Sierpinski tetrahedron](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle#Analogues_in_higher_dimensions).
+***triangle** might be a misnomer, but hey... it DOES consist of triangles.*
 
 ![screenshot](screenshot.png)
 
