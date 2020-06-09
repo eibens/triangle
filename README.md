@@ -2,7 +2,7 @@
 
 Interactive WebGL animation of a [Sierpinski tetrahedron](https://en.wikipedia.org/wiki/Sierpi%C5%84ski_triangle#Analogues_in_higher_dimensions).
 
-[DEMO](https://lambda.website/triangle)
+[DEMO](https://lambda.website/app/triangle)
 
 ***triangle** might be a misnomer, but hey... it DOES consist of triangles.*
 
